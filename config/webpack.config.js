@@ -11,6 +11,7 @@ const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const OptimizeThreePlugin = require('@vxna/optimize-three-webpack-plugin');
 const env = require('../etc/env'); // assume already loaded, checked
 const {
+  pathToClientSrc,
   pathToBuild,
   pathToPublicIndex,
   pathToFavicon,
@@ -56,15 +57,21 @@ const vueRule = {
   loader: 'vue-loader'
 };
 
+
 const scssRuleDev = {
-  test: /\.s?css$/i,
+  test: /\.(css|scss)$/i,
   use: [
     'vue-style-loader',
     'css-loader',
     {
       loader: 'sass-loader',
       options: {
+        implementation: require("sass"),
         sourceMap: true,
+        sassOptions: {
+          includePaths: [pathToClientSrc],
+          indentedSyntax: false,
+        }
       }
     }
   ]
@@ -81,6 +88,7 @@ const scssRuleProd = {
       options: {
         sourceMap: false,
         sassOptions: {
+          ...scssRuleDev.use[2].options.sassOptions,
           outputStyle: 'compressed',
         }
       }
@@ -88,14 +96,107 @@ const scssRuleProd = {
   ]
 }
 
+const sassRuleDev = {
+  test: /\.(sass)$/i,
+  use: [
+    'vue-style-loader',
+    'css-loader',
+    {
+      loader: 'sass-loader',
+      options: {
+        implementation: require("sass"),
+        sourceMap: true,
+        sassOptions: {
+          includePaths: [pathToClientSrc],
+          indentedSyntax: true,
+        }
+      }
+    }
+  ]
+};
+
+const sassRuleProd = {
+  ...sassRuleDev,
+  sideEffects: true,
+  use: [
+    MiniCssExtractPlugin.loader,
+    'css-loader',
+    {
+      loader: 'sass-loader',
+      options: {
+        sourceMap: false,
+        sassOptions: {
+          ...sassRuleDev.use[2].options.sassOptions,
+          outputStyle: 'compressed',
+        }
+      }
+    }
+  ]
+}
+
+
+// use resourceQuery for svgs
+const svgRule = {
+  test: /\.(svg)$/i,
+  oneOf: [
+    {
+      // default
+      resourceQuery: /inline/i,
+      use: [
+        { // babel loader doesn't really matter here tbh
+          loader: "babel-loader",
+          options: babelDevConfig,
+        },
+        {
+          loader: "vue-svg-loader",
+          options: {
+            svgo: {
+              plugins: [
+                { removeDimensions: true },
+                { removeViewBox: false },
+              ],
+            },
+          },
+        },
+      ]
+    },
+    {
+      use: {
+        loader: "file-loader",
+        options: {
+          outputPath: "images",
+        }
+      }
+    },
+  ],
+};
+
+
+const mdRule = {
+  test: /\.(md)$/i,
+  use: [
+    {
+      loader: "vue-loader",
+    },
+    {
+      loader: 'vue-markdown-loader/lib/markdown-compiler',
+      options: {
+        raw: true,
+      }
+    }
+  ]
+};
+
+
 const fileRules = [
+  mdRule,
+  svgRule,
   {
     // file-loader for image assets
-    test: /\.(png|jpe?g|gif|svg)$/i,
+    test: /\.(png|jpe?g|gif)$/i,
     use: {
       loader: "file-loader",
       options: {
-        emitFile: true,
         outputPath: "images" // relative to output dir
       },
     },
@@ -122,10 +223,13 @@ const fileRules = [
   },
 ];
 
+
+
 const rulesDev = [
   babelRuleDev,
   vueRule,
   scssRuleDev,
+  sassRuleDev,
   ...fileRules
 ];
 
@@ -133,11 +237,12 @@ const rulesProd = [
   babelRuleProd,
   vueRule,
   scssRuleProd,
+  sassRuleProd,
   ...fileRules
 ];
 
 const fonts = [
-  { family: "Nunito", variants: ["700", "800"] },
+  { family: "Nunito", variants: ["600", "700", "800"] },
 ];
 
 const htmlWebpackOptions = {
@@ -151,7 +256,7 @@ const plugins = [
   new VueLoaderPlugin(),
   new OptimizeThreePlugin(),
   new webpack.DefinePlugin({ "process.env": JSON.stringify(clientEnv) }),
-  new webpack.DefinePlugin({"process.injected": JSON.stringify(injection)}),
+  new webpack.DefinePlugin({ "process.injected": JSON.stringify(injection) }),
 ];
 
 const pluginsDev = [
@@ -195,6 +300,7 @@ const pluginsProd = [
   }),
 ];
 
+
 const optimizatonProd = {
   minimizer: [
     new TerserPlugin({
@@ -209,6 +315,16 @@ const optimizatonProd = {
   ],
 };
 
+const resolve = {
+  extensions: [
+    ".js",
+    ".vue"
+  ],
+  alias: {
+    "~": pathToClientSrc,
+  }
+};
+
 const webpackDevConfig = {
   mode: "development",
   devtool: "source-map",
@@ -217,7 +333,8 @@ const webpackDevConfig = {
   module: {
     rules: rulesDev
   },
-  plugins: pluginsDev
+  plugins: pluginsDev,
+  resolve
 };
 
 const webpackProdConfig = {
@@ -233,6 +350,7 @@ const webpackProdConfig = {
   // ignore webpack performance warnings
   // not a good gauge
   performance: false,
+  resolve
 };
 
 // default setting, set by .env

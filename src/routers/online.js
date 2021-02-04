@@ -1,14 +1,15 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Home from '/pages/Home.vue';
-import Browse from '/pages/Browse.vue';
-import Editor from '/pages/Editor.vue';
-import FAQ from '/pages/FAQ.vue';
-import Changelog from '/pages/Changelog.vue';
-import Missing from '/pages/Missing.vue';
-import ModeratorIndex from '/pages/moderator/Index.vue';
-import ModeratorLogin from '/pages/moderator/Login.vue';
-import ModeratorDashboard from '/pages/moderator/Dashboard.vue';
+import Home from '~/pages/Home.vue';
+import Browse from '~/pages/Browse.vue';
+import Editor from '~/pages/Editor';
+import FAQ from '~/pages/FAQ.vue';
+import About from '~/pages/About.vue';
+import Updates from '~/pages/Updates.vue';
+import Missing from '~/pages/Missing.vue';
+import ModeratorIndex from '~/pages/moderator/Index.vue';
+import ModeratorLogin from '~/pages/moderator/Login.vue';
+import ModeratorDashboard from '~/pages/moderator/Dashboard.vue';
 Vue.use(VueRouter);
 
 const mode = "history";
@@ -18,7 +19,8 @@ const routes = [
   { path: "/browse", component: Browse },
   { path: "/editor", component: Editor },
   { path: "/faq", component: FAQ },
-  { path: "/changelog", component: Changelog },
+  { path: "/about", component: About },
+  { path: "/updates", component: Updates },
   {
     path: "/moderator",
     component: ModeratorIndex,

@@ -1,13 +1,17 @@
 @import "reset-css";
-$main-font: 'Nunito';
-$bg-color: #FFFAE5;
-$color: #7E7261;
-$link-color: #E98394;
-$link-hover: #EC637A;
+@import "styles/colors";
+
+$main-font: "Nunito";
+$bg-color: $ecru-white;
+$color: $olive-haze;
+$font-size: 16px;
 
 html {
   height: 100%;
+  font-size: 16px;
+  text-size-adjust: none;
 }
+
 body {
   position: relative;
   top: 0;
@@ -16,12 +20,11 @@ body {
   height: 100%;
   background-color: $bg-color;
   color: $color;
+
   font-family: $main-font;
+  font-weight: 700;
 }
+
 a {
-  color: $link-color;
   text-decoration: none;
-}
-a:hover {
-  color: $link-hover;
 }
